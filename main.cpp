@@ -18,7 +18,7 @@ void run(neuron *x) {
 void run_print(neuron *x) {
     while(!*(*x)._exit) {
         (*x).run();
-        cout << "Output: " << (*x).get_output() << endl;
+        
     }
 }
 
@@ -43,12 +43,13 @@ int main(int argc, char *argv[]) {
         t[i] = thread(run, &x[i]);
     }
     x[N-1].add_output(output);
-    t[N-1] = thread(run_print, &x[N-1]);
+    t[N-1] = thread(run, &x[N-1]);
     //double in = 0;
     while(*input != -1) {
         cout << "Input: ";
         cin >> *input;
-        //cout << "Output: " << *output << endl;
+        while(*input != x[N-1].get_output());
+        cout << "Output: " << *output << endl;
     }
 
     *exit = true;

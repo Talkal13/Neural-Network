@@ -39,6 +39,8 @@ class neuron {
 
         void add_output(double *w) {
             output.add(w);
+            calculate(_w, input);
+            set_output(_a);
             
         }
 
