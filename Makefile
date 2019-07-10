@@ -1,3 +1,3 @@
 
 all: main.cpp
-	g++ -o main main.cpp -Wall -lm -lpthread
+	g++ -o bin/main src/main.cpp -Wall -lm -lpthread -lncurses -g
