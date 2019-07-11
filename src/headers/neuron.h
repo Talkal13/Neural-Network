@@ -13,7 +13,6 @@ class neuron {
         int _id;
         int _a;
         bool *_exit;
-        bool *_done;
         std::mutex *_mutex;
         size_t _time;
         connection<> input;
@@ -51,10 +50,6 @@ class neuron {
             
         }
 
-        void add_done(bool *done) {
-            _done = done;
-        }
-
         double get_output() {
             return *output[0];
         }
@@ -65,11 +60,10 @@ class neuron {
 
         void run() {
             while(!(*_exit)) {
-                while (!_mutex->try_lock());
-                size_t time = calculate_time();
+                rest();
                 calculate(_w, input);
                 set_output(_a);
-                signal(_done);
+                signal();
             }
             
         }
@@ -113,16 +107,19 @@ class neuron {
             return _a;
         }
 
-        void signal(bool *done) {
-            if (done != nullptr) *done = true;
+        /*
+            Resting function -> Check for changes if found gain the mutex and trigger a wake up        
+         */
+        void rest() {
+            _mutex->lock();
         }
 
-        void clear(bool *done) {
-            if (done != nullptr) *done = false;
+        void signal() {
+            _mutex->unlock();
         }
 
         void gradient_descent() {
-
+            
         }
 
 

@@ -28,6 +28,7 @@ class connection {
         }
 
         void set(T x, int i) {
+            if (_cons.empty() || _cons[i].ptr == nullptr) return;
             *((_cons[i]).ptr) = x;
         }
 

@@ -3,7 +3,10 @@
 
 #include "connection.h"
 
-
+struct functions {
+    double (*sigma)(double);
+    double (*der)(double);    
+};
 
 template <class T=double> 
 T sum(std::vector<T> w, connection<> a) {
@@ -14,11 +17,23 @@ T sum(std::vector<T> w, connection<> a) {
     return result;
 }
 
-double sigmoid(double x) {
+double f_sigmoid(double x) {
     return 1.0 / (1.0 + std::exp(-1.0 * x));
 }
 
-double equal(double x) {return x;}
+double der_sigmoid(double x) {
+    double z = f_sigmoid(x);
+    return z * (1 - z);
+}
+
+double f_equal(double x) {
+    return x;
+}
+
+double der_equal(double x) {
+    return 1;
+}
+
 
 //0.55
 double reLu(double x) {
