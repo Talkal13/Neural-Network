@@ -1,16 +1,10 @@
 #pragma once
 #include <iostream>
 
-template <class T>
-struct signal_pr {
-    T *ptr;
-    T old;
-};
-
 template <class T=double>
 class connection {
     private:
-    std::unordered_map<int, signal_pr<T>> _cons;
+    std::unordered_map<int, T*> _cons;
 
     public:
         connection() {
@@ -20,38 +14,37 @@ class connection {
         }
 
         void add(T *x) {
-            signal_pr<T> p;
-            (p).ptr = x;
-            (p).old = *x;
-            _cons.insert({_cons.size(), p});
+            _cons.insert({_cons.size(), x});
 
         }
 
-        void set(T x, int i) {
-            if (_cons.empty() || _cons[i].ptr == nullptr) return;
-            *((_cons[i]).ptr) = x;
+        void set(int i, T x) {
+            if (_cons.empty() || _cons[i] == nullptr) return;
+            *(_cons[i]) = x;
         }
 
         void sleep() {
-            bool change;
-            do {
-                change = false;
-                for (auto it = _cons.begin(); it != _cons.end(); ++it) {
-                    signal_pr<T> p = (*it).second;
-                    if (*p.ptr != p.old) {
-                        change = true; 
-                        p.old = *p.ptr;
-                    }
-                }
-            } while(!change);
+
         }
 
         T get(int i) {
-            return *(_cons[i].ptr);
+            return *(*this)[i];
         }
 
         T* operator[](int i) {
-            return (_cons[i]).ptr;
+            if (empty(i)) throw std::out_of_range("Null pointer in connection");
+            return (_cons[i]);
+        }
+
+        bool empty(int i) {
+            return (_cons.empty() || _cons[i] == nullptr);
+        }
+
+        void clear() {
+            for (std::pair<const int, double *> e : _cons) {
+                delete e.second;
+            }
+            _cons.clear();
         }
 
 };
