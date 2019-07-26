@@ -14,13 +14,16 @@ class neuron {
 
         }
 
-        neuron(int id, double (*sigma)(double), bool *exit, std::mutex *mutex) {
+        neuron(int id, functions fun, bool *exit, std::mutex *mutex) {
             _id = id;
-            _sigma = sigma;
+            _sigma = fun.sigma;
+            _der_sigma = fun.der;
             _exit = exit;
             _mutex = mutex;
             double *d = new double;
             _output.add(d);
+            _a = 0;
+            _z = 0;
         }
 
         ~neuron() {
@@ -32,13 +35,21 @@ class neuron {
         void add_input(double *con, double w) {
             _input.add(con);
             _w.push_back(w);
+            _delta_o.add(new double);
         }
 
         void add_output(double *w) {
             _output.add(w);
             calculate(_w, _input);
             set_output(_a);
-            
+        }
+
+        void add_i_error(double *error) {
+            _delta_i.add(error);
+        }
+
+        double* get_o_error(int i) {
+            return _delta_o[i];
         }
 
         double* get_output() {
@@ -64,6 +75,15 @@ class neuron {
             set_output(_a);
         }
 
+        void back_propagation() {
+            _delta = calculate_delta();
+            update_delta();
+            for (size_t i = 0; i < _w.size(); i++) {
+                _w[i] = _w[i] - calculate_gradient(i); // TODO: learning rate;
+            }
+            
+        }
+
         std::thread start() {
             return std::thread(neuron::call, this);
         }
@@ -78,8 +98,38 @@ class neuron {
             _input.set(i, w);
         }
 
+        void set_delta_error(double y_j) {
+            *(_delta_i[0]) = (_a - y_j);
+        }
+
         void clear_input() {
             _input.clear();
+        }
+
+        void clear_error() {
+            _delta_i.clear();
+        }
+
+        void print() {
+            std::cout << _id << ": "
+                << "\t" << "Input: " << std::endl;
+                for (int i = 0; i < _input.size(); i++) {
+                    std::cout << "\t\t" << _input[i] << "  w" << i << ": " << _w[i] << std::endl;
+                }
+                std::cout << "\t" << "Output: " << std::endl;
+                for (auto out : _output) {
+                    std::cout << "\t\t" << out.second << std::endl;
+                }
+                std::cout << "\t" << "Input Error: " << std::endl;
+                for (auto in : _delta_i) {
+                    std::cout << "\t\t" << in.second << std::endl;
+                }
+                std::cout << "\t" << "Output Error:" << std::endl;
+                for (auto out : _delta_o) {
+                    std::cout << "\t\t" << out.second <<std::endl;
+                }
+            std::cout << std::endl;
+
         }
 
     private:
@@ -93,7 +143,8 @@ class neuron {
         }
 
         double calculate(const std::vector<double> &w, connection<> _input) {
-            _a = _sigma(sum(w, _input));
+            _z = sum(w, _input);
+            _a = _sigma(_z);
             return _a;
         }
 
@@ -108,27 +159,50 @@ class neuron {
             _mutex->unlock();
         }
 
-        void gradient_descent() {
-            
-        }
-
         void update_gates() {
             for (size_t i = 0; i < _w.size(); i++) {
                 try {
-                    _w[i] += _g_gate.get(i);
+                    _w[i] += _delta_i.get(i);
                 } catch (std::out_of_range& e) {};
             }
         }
 
+        double calculate_gradient(int j) {
+            return _delta * *_input[j];
+        }
+
+        double calculate_delta() {
+            double delta = 0;
+            for (auto d : _delta_i) {
+                delta += *(d.second);
+            }
+            return delta * _der_sigma(_z);
+        }
+
+        void update_delta() {
+            for (size_t i = 0; i < _delta_o.size(); i++) {
+                update_delta(i);
+            }
+        }
+
+        void update_delta(int i) {
+            *_delta_o[i] = _w[i] * _delta;
+        }
+
         int _id;
         double _a;
+        double _z;
+        double bias;
         bool *_exit;
+        double _delta;
         std::mutex *_mutex;
         connection<> _input;
         connection<> _output;
-        connection<> _g_gate;
+        connection<> _delta_i;
+        connection<> _delta_o;
         std::vector<double> _w;
         double (*_sigma)(double w);
+        double (*_der_sigma)(double w);
 
 
 };

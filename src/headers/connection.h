@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
+#include <map>
 
 template <class T=double>
 class connection {
     private:
-    std::unordered_map<int, T*> _cons;
+    std::map<int, T*> _cons;
 
     public:
         connection() {
@@ -40,11 +41,23 @@ class connection {
             return (_cons.empty() || _cons[i] == nullptr);
         }
 
+        size_t size() {
+            return _cons.size();
+        }
+
         void clear() {
             for (std::pair<const int, double *> e : _cons) {
                 delete e.second;
             }
             _cons.clear();
+        }
+
+        auto begin() {
+            return _cons.begin();
+        }
+
+        auto end() {
+            return _cons.end();
         }
 
 };
