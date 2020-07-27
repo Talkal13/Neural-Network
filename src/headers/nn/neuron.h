@@ -10,18 +10,19 @@
 
 class neuron {
     public:
-        neuron() {
+        
+        neuron() {}
 
-        }
-
-        neuron(int id, functions fun, bool *exit, std::mutex *mutex) {
+        neuron(int id, functions fun, bool *exit, std::mutex *mutex, double lr) {
             _id = id;
             _sigma = fun.sigma;
             _der_sigma = fun.der;
             _exit = exit;
             _mutex = mutex;
+            _lr = lr;
             double *d = new double;
             _output.add(d);
+
             _a = 0;
             _z = 0;
         }
@@ -76,10 +77,10 @@ class neuron {
         }
 
         void back_propagation() {
-            _delta = calculate_delta();
+            _delta = calculate_delta(); // error
             update_delta();
             for (size_t i = 0; i < _w.size(); i++) {
-                _w[i] = _w[i] - calculate_gradient(i); // TODO: learning rate;
+                _w[i] = _w[i] - calculate_gradient(i) * _lr; // TODO: learning rate;
             }
             
         }
@@ -113,7 +114,7 @@ class neuron {
         void print() {
             std::cout << _id << ": "
                 << "\t" << "Input: " << std::endl;
-                for (int i = 0; i < _input.size(); i++) {
+                for (size_t i = 0; i < _input.size(); i++) {
                     std::cout << "\t\t" << _input[i] << "  w" << i << ": " << _w[i] << std::endl;
                 }
                 std::cout << "\t" << "Output: " << std::endl;
@@ -143,7 +144,7 @@ class neuron {
         }
 
         double calculate(const std::vector<double> &w, connection<> _input) {
-            _z = sum(w, _input);
+            _z = sum<double>(w, _input) + _b;
             _a = _sigma(_z);
             return _a;
         }
@@ -192,7 +193,7 @@ class neuron {
         int _id;
         double _a;
         double _z;
-        double bias;
+        double _lr;
         bool *_exit;
         double _delta;
         std::mutex *_mutex;
@@ -201,6 +202,7 @@ class neuron {
         connection<> _delta_i;
         connection<> _delta_o;
         std::vector<double> _w;
+        double _b;
         double (*_sigma)(double w);
         double (*_der_sigma)(double w);
 

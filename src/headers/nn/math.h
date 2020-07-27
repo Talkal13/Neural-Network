@@ -62,5 +62,5 @@ double der_reLu(double x) {
 functions reLu {f_reLu, der_reLu};
 
 double random_0_1() {
-    return (rand() / (RAND_MAX)) + 1;
+    return (float) rand()/RAND_MAX;
 }
