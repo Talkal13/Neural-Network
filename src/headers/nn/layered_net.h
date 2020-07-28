@@ -1,78 +1,12 @@
 
 #include "neuron.h"
 #include <iostream>
+#include <fstream>
+#include "math.h"
 
 enum L_TYPE {HIDDEN_LAYER, INPUT_LAYER, OUTPUT_LAYER};
 
 class layered_net {
-    private:
-        std::vector<std::vector<neuron*>> _layers;
-        size_t _count;
-        size_t _l_size;
-        bool *_exit;
-        std::mutex *_mutex;
-        double _c_avg_error = 100;
-        double _error_lim = 0.001;
-
-        template <class T=neuron*>
-        void clear(std::vector<T> layer) {
-            for (T e : layer) {
-                clear(e);
-            }
-        }
-
-        void clear(neuron *n) {
-            delete n;
-        }
-
-        template <class T=neuron*>
-        void clear_input(std::vector<T> layer) {
-            for (T e : layer) {
-                clear_input(e);
-            }
-        }
-
-        void clear_input(neuron *n) {
-            n->clear_input();
-        }
-
-        void connect(neuron *n, size_t i) {
-            if (i < 0) return;
-            std::vector<neuron*> b_layer = _layers[i];
-            for (neuron *b_n : b_layer) {
-                n->add_input(b_n->get_output(), random_0_1());
-            }
-        }
-
-        void connect_error(neuron *n, size_t i, size_t j) {
-            std::vector<neuron*> b_layer = _layers[i];
-            for (neuron *b_n : b_layer) {
-                n->add_i_error(b_n->get_o_error(j));
-            }
-
-        }
-
-        template <class T=neuron*>
-        void forward_run(std::vector<T> layer) {
-            for (T element : layer) {
-                forward_run(element);
-            }
-        }
-
-        void forward_run(neuron *n) {
-            n->forward_run();
-        }
-
-        template <class T=neuron*>
-        void back_propagation(std::vector<T> layer) {
-            for (auto it = layer.rbegin(); it != layer.rend(); ++it) {
-                back_propagation(*it);
-            }
-        }
-
-        void back_propagation(neuron *n) {
-            n->back_propagation();
-        }
 
     public:
         layered_net() {
@@ -220,6 +154,28 @@ class layered_net {
 
         }
 
+        void save_dimacs(std::string filename) {
+            std::ofstream file = std::ofstream(filename, std::ofstream::out);
+            file << "n " << _layers.size() << std::endl;
+            for (std::vector<neuron*> layer : _layers) {
+                file << "l " << layer.size() << " " << layer[0]->get_lr() << " " << layer[0]->get_repr() << std::endl;
+            }
+            file.close();
+
+        }
+
+        void load_dimacs(std::string filename) {
+            std::ifstream file = std::ifstream(filename, std::ifstream::in);
+            std::string aux, func;
+            size_t size, ls;
+            double lr;
+            file >> aux >> size;
+            for (size_t i = 0; i < size; i++) {
+                file >> aux >> ls >> lr >> func;
+                add_layer(get_function(func), ls, lr);
+            }
+        }
+
         void train(std::vector<std::vector<double>> (*data)(), size_t epoch, size_t e_size,  bool verbose=true) {
             std::vector<double> input, result;
             double avg_error = 0;
@@ -259,9 +215,16 @@ class layered_net {
             
         }
 
+
         void train(std::vector<std::vector<double>> (*data)(), double error,  bool verbose=true) {
             while (_c_avg_error > error) {
-                train(data, 1, 100, verbose);
+                train(data, 1, (size_t) 100, verbose);
+            }
+        }
+
+        void train(std::vector<std::vector<double>> (*data)(), double error, volatile bool *t, bool verbose=true) {
+            while (*t && _c_avg_error > error) {
+                train(data, 1, (size_t) 100, verbose);
             }
         }
 
@@ -310,5 +273,85 @@ class layered_net {
                 }
             }
         }
+
+    private:
+
+        template <class T=neuron*>
+        void clear(std::vector<T> layer) {
+            for (T e : layer) {
+                clear(e);
+            }
+        }
+
+        void clear(neuron *n) {
+            delete n;
+        }
+
+        template <class T=neuron*>
+        void clear_input(std::vector<T> layer) {
+            for (T e : layer) {
+                clear_input(e);
+            }
+        }
+
+        void clear_input(neuron *n) {
+            n->clear_input();
+        }
+
+        void connect(neuron *n, size_t i) {
+            if (i < 0) return;
+            std::vector<neuron*> b_layer = _layers[i];
+            for (neuron *b_n : b_layer) {
+                n->add_input(b_n->get_output(), random_0_1());
+            }
+        }
+
+        void connect_error(neuron *n, size_t i, size_t j) {
+            std::vector<neuron*> b_layer = _layers[i];
+            for (neuron *b_n : b_layer) {
+                n->add_i_error(b_n->get_o_error(j));
+            }
+
+        }
+
+        template <class T=neuron*>
+        void forward_run(std::vector<T> layer) {
+            for (T element : layer) {
+                forward_run(element);
+            }
+        }
+
+        void forward_run(neuron *n) {
+            n->forward_run();
+        }
+
+        template <class T=neuron*>
+        void back_propagation(std::vector<T> layer) {
+            for (auto it = layer.rbegin(); it != layer.rend(); ++it) {
+                back_propagation(*it);
+            }
+        }
+
+        void back_propagation(neuron *n) {
+            n->back_propagation();
+        }
+
+        functions get_function(std::string name) {
+            if (name == "tanh") {
+                return tanH;
+            } else if (name == "reLu") {
+                return reLu;
+            }
+
+            return sigmoid;
+        }
+
+        std::vector<std::vector<neuron*>> _layers;
+        size_t _count;
+        size_t _l_size;
+        bool *_exit;
+        std::mutex *_mutex;
+        double _c_avg_error = 100;
+        double _error_lim = 0.001;
 
 };

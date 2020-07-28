@@ -5,13 +5,16 @@
 #include <mutex>
 #include <fstream>
 #include <random>
+#include <signal.h>
 
-#include "headers/neuron.h"
-#include "headers/layered_net.h"
+#include "headers/nn/neuron.h"
+#include "headers/nn/layered_net.h"
 
 const int N = 8;
 
 using namespace std;
+
+volatile bool *t;
 
 
 void write_output(string filename, double *output, bool *exit) {
@@ -212,7 +215,7 @@ std::vector<std::vector<double>> and_f() {
     r[0].push_back(k);
     r[0].push_back(j);
     r.push_back(std::vector<double>());
-    r[1].push_back(k || j);
+    r[1].push_back(k && j);
     return r;
 }
 
@@ -221,9 +224,10 @@ std::vector<std::vector<double>> and_f() {
 void debug() {
     layered_net l;
     
-    l.add_layer(sigmoid, 2, 0.03);
-    l.add_layer(sigmoid, 4, 0.03);
-    l.add_layer(sigmoid, 1, 0.03);
+    l.add_layer(tanH, 2, 0.03);
+    l.add_layer(tanH, 4, 0.03);
+    l.add_layer(tanH, 2, 0.03);
+    l.add_layer(tanH, 1, 0.03);
     std::vector<double> input = unique()[0];
     std::vector<double> error = unique()[1];
     l.set_input(input);
@@ -236,11 +240,16 @@ void debug() {
         cout << l.calculate_error(error) << endl;
         sleep(1);
     }
-    l.train(and_f, 2e-4, true);
-    l.test(and_f, 10);
+    *t = true;
+    l.train(and_f, 2e-6, t, true);
+    l.test(and_f, 20);
 
 }
 
+
+void signal_handler(int signum) {
+    *t = false;
+}
 
 
 
@@ -252,6 +261,9 @@ int main(int argc, char *argv[]) {
     // } else {
     //     filename = "output/output.dat";
     // }
-   debug();
+    t = new bool;
+    signal(SIGINT, signal_handler);
+    debug();
+    delete t;
 }
 
