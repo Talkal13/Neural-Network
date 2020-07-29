@@ -1,0 +1,5 @@
+n 4
+l 2 0.03 tanh
+l 4 0.03 tanh
+l 2 0.03 tanh
+l 1 0.03 tanh

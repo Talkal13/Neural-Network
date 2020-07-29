@@ -72,6 +72,16 @@ double der_tanh(double x) {
 
 functions tanH {f_tanh, der_tanh, "tanh"};
 
+double f_sin(double x) {
+    return sin(x);
+}
+
+double der_sin(double x) {
+    return -cos(x);
+}
+
+functions sinX {f_sin, der_sin, "sin"};
+
 double random_0_1() {
     return (float) rand()/RAND_MAX;
 }

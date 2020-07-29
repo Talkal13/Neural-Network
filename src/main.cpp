@@ -215,7 +215,7 @@ std::vector<std::vector<double>> and_f() {
     r[0].push_back(k);
     r[0].push_back(j);
     r.push_back(std::vector<double>());
-    r[1].push_back(k && j);
+    r[1].push_back((!k && j) || (k && !j));
     return r;
 }
 
@@ -224,10 +224,7 @@ std::vector<std::vector<double>> and_f() {
 void debug() {
     layered_net l;
     
-    l.add_layer(tanH, 2, 0.03);
-    l.add_layer(tanH, 4, 0.03);
-    l.add_layer(tanH, 2, 0.03);
-    l.add_layer(tanH, 1, 0.03);
+    l.load_dimacs("./files/xor.nn");
     std::vector<double> input = unique()[0];
     std::vector<double> error = unique()[1];
     l.set_input(input);
@@ -243,6 +240,8 @@ void debug() {
     *t = true;
     l.train(and_f, 2e-6, t, true);
     l.test(and_f, 20);
+
+    l.save_dimacs("./files/xor.nn");
 
 }
 

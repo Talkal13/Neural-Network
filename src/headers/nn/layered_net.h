@@ -341,8 +341,11 @@ class layered_net {
                 return tanH;
             } else if (name == "reLu") {
                 return reLu;
+            } else if (name == "step") {
+                return step;
+            } else if (name == "sin") {
+                return sinX;
             }
-
             return sigmoid;
         }
 
