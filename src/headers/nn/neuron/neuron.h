@@ -21,8 +21,7 @@ class neuron {
             _exit = exit;
             _mutex = mutex;
             _lr = lr;
-            double *d = new double;
-            _output.push_back(connection<>(d));
+            _output.push_back(connection<>());
 
             _a = 0;
             _z = 0;
